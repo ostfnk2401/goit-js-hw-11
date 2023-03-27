@@ -64,7 +64,6 @@ const fetchImages = async () => {
 
     Notify.success(`Found ${data.hits.length} images for "${currentQuery}"`);
     
-    // Show/hide the "Load more" button
     if (data.hits.length < perPage || (page * perPage) >= totalHits) {
       loadMoreButton.style.display = 'none';
       Notify.info("We're sorry, but you've reached the end of search results.");
