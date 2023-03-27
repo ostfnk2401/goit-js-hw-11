@@ -1,44 +1,59 @@
-import { Notify } from 'notiflix';
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
+import { Notify } from "notiflix";
+import axios from "axios";
 
 const searchForm = document.getElementById('search-form');
-const searchInput = searchForm.elements['searchQuery'];
+const searchQuery = document.querySelector('[name="searchQuery"]');
+const resultsContainer = document.getElementById('results-container');
+
+const lightbox = new SimpleLightbox('.card a', {});
 
 searchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const query = searchInput.value.trim();
+  const apiKey = '34743678-8f2fe0b7f9199ad98c83caeae';
+  const apiUrl = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery.value}&image_type=photo&orientation=horizontal&safesearch=true`;
 
-  if (query === '') {
-    Notify.failure('Please enter a search query.');
+  const response = await fetch(apiUrl);
+  const data = await response.json();
+
+  if (data.hits.length === 0) {
+    Notify.failure('Sorry, there are no images matching your search query. Please try again.');
     return;
   }
-//   const apiUrl = ;
-  try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
 
-    if (data.hits.length === 0) {
-      Notify.warning('Sorry, there are no images matching your search query. Please try again.');
-      return;
-    }
+  let html = '';
 
-    const images = data.hits;
+  data.hits.forEach((image) => {
+    const { webformatURL, largeImageURL, tags, likes, views, comments, downloads } = image;
 
-    const html = images.map((image) => `
+    html += `
       <div class="card">
-        <img src="${image.webformatURL}" alt="${image.tags}" />
-        <div class="details">
-          <span class="likes">${image.likes} likes</span>
-          <span class="views">${image.views} views</span>
-          <span class="downloads">${image.downloads} downloads</span>
+        <a href="${largeImageURL}" data-lity>
+          <img src="${webformatURL}" alt="${tags}" width="450" height="270" />
+        </a>
+        <div class="card-info">
+          <ul class="card-list">
+            <li class="card-item"><span class="card-text">Likes</span> ${likes}</li>
+            <li class="card-item"><span class="card-text">Views</span> ${views}</li>
+            <li class="card-item"><span class="card-text">Comments</span> ${comments}</li>
+            <li class="card-item"><span class="card-text">Downloads</span> ${downloads}</li>
+          </ul>
         </div>
       </div>
-    `).join('');
+    `;
+  });
+  
+  resultsContainer.innerHTML = '';
+  resultsContainer.insertAdjacentHTML('beforeend', html);
 
-    const resultsContainer = document.getElementById('results-container');
-    resultsContainer.insertAdjacentHTML('beforeend', html)
-  } catch (error) {
-    console.error(error);
-    Notify.failure('Failed to fetch search results. Please try again later.');
-  }
+  lightbox.refresh();
+
+  Notify.success(`Found ${data.hits.length} images for "${searchQuery.value}"`);
 });
+const loadMore = async () => {
+    if (fetchingData) return;
+    fetchingData = true;
+    page++;
+}
